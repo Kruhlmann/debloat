@@ -3,6 +3,7 @@ from error import IllegalTokenError
 from position import Position
 from parser import Parser
 from interpreter import Interpreter
+from context import Context
 
 class Lexer:
     def __init__(self, fname, source):
@@ -85,6 +86,7 @@ def lex(fname):
         return None, tree.error
 
     interpreter = Interpreter()
-    result = interpreter.visit(tree.node)
+    context = Context("<main>")
+    result = interpreter.visit(tree.node, context)
 
-    return result, None
+    return result.value, result.error
