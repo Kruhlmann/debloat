@@ -6,20 +6,24 @@ class ParseResult:
     def __init__(self):
         self.error = None
         self.node = None
+        self.advancements = 0
 
     def register(self, res):
-        if isinstance(res, ParseResult):
-            if res.error:
-                self.error = res.error
-            return res.node
-        return res
+        self.advancements += res.advancements
+        if res.error:
+            self.error = res.error
+        return res.node
+
+    def register_advancement(self):
+        self.advancements += 1
 
     def success(self, node):
         self.node = node
         return self
 
     def failure(self, error):
-        self.error = error
+        if not self.error or self.advancements == 0:
+            self.error = error
         return self
 
 class Parser:
@@ -46,7 +50,8 @@ class Parser:
 
         while self.current_token.type in ops:
             op = self.current_token
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             right = res.register(func_b())
             if res.error:
                 return res
@@ -59,21 +64,28 @@ class Parser:
         token = self.current_token
 
         if token.type in (TT_INT, TT_DEC):
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             return res.success(NumberNode(token))
+        elif token.type == TT_ID:
+            res.register_advancement()
+            self.advance()
+            return res.success(VarAccessNode(token))
         elif token.type == TT_LPAREN:
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             expr = res.register(self.expr())
             if res.error:
                 return res
             if self.current_token.type == TT_RPAREN:
-                res.register(self.advance())
+                res.register_advancement()
+                self.advance()
                 return res.success(expr)
             else:
-                error = InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, f"Unexpected token '{self.current_token.type}' expected ')' in parenthetical")
+                error = InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, f"Unexpected token '{self.current_token.type}', expected ')' in parenthetical")
                 return res.failure(error)
 
-        error = InvalidSyntaxError(token.pos_start, token.pos_end, f"Unexpected token '{token.type}', expected operator")
+        error = InvalidSyntaxError(token.pos_start, token.pos_end, f"Unexpected token '{token.type}', expected operator or identifier")
         return res.failure(error)
 
     def power(self):
@@ -84,7 +96,8 @@ class Parser:
         token = self.current_token
 
         if token.type in (TT_ADD, TT_SUB):
-            res.register(self.advance())
+            res.register_advancement()
+            self.advance()
             factor = res.register(self.factor())
             if res.error:
                 return res
@@ -96,7 +109,36 @@ class Parser:
         return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_POW))
 
     def expr(self):
-        return self.bin_op(self.term, (TT_ADD, TT_SUB))
+        res = ParseResult()
+        if self.current_token.matches(TT_KEY, "SET"):
+            res.register_advancement()
+            self.advance()
+
+            if self.current_token.type != TT_ID:
+                error = InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, f"Unexpected token '{self.current_token.type}', expected identifier")
+                return res.failure(error)
+
+            var_name = self.current_token
+            res.register_advancement()
+            self.advance()
+
+            if self.current_token.type != TT_EQ:
+                error = InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, f"Unexpected token '{self.current_token.type}', expected '=''")
+                return res.failure(error)
+
+            res.register_advancement()
+            self.advance()
+            expr = res.register(self.expr())
+            if (res.error):
+                return res
+            return res.success(VarAssignNode(var_name, expr))
+
+        node = res.register(self.bin_op(self.term, (TT_ADD, TT_SUB)))
+
+        if res.error:
+            error = InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, f"Unexpected token '{self.current_token.type}', expected 'SET', operator or identifier")
+            return res.failure(error)
+        return result.success(node)
 
     def parse(self):
         res = self.expr()

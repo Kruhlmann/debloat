@@ -1,9 +1,11 @@
 from token import *
+from types import *
 from error import IllegalTokenError
 from position import Position
 from parser import Parser
 from interpreter import Interpreter
 from context import Context
+from scope import Scope
 
 class Lexer:
     def __init__(self, fname, source):
@@ -25,6 +27,8 @@ class Lexer:
                 self.advance()
             elif self.current_symbol in DIGITS:
                 tokens.append(self.make_number())
+            elif self.current_symbol in LETTERS + "_":
+                tokens.append(self.make_identifier())
             elif self.current_symbol == "+":
                 tokens.append(Token(TT_ADD, pos_start=self.pos))
                 self.advance()
@@ -45,6 +49,9 @@ class Lexer:
                 self.advance()
             elif self.current_symbol == ")":
                 tokens.append(Token(TT_RPAREN, pos_start=self.pos))
+                self.advance()
+            elif self.current_symbol == "=":
+                tokens.append(Token(TT_EQ, pos_start=self.pos))
                 self.advance()
             else:
                 pos_start = self.pos.copy()
@@ -74,7 +81,20 @@ class Lexer:
         else:
             return Token(TT_DEC, float(num_s), pos_start, self.pos)
 
+    def make_identifier(self):
+        id_str = ""
+        pos_start = self.pos.copy()
+
+        while self.current_symbol != None and self.current_symbol in LETTERS_DIGITS + "_":
+            id_str += self.current_symbol
+            self.advance()
+
+        token_type = TT_KEY if id_str in KEYWORDS else TT_ID
+        return Token(token_type, id_str, pos_start, self.pos)
+
 def lex(fname):
+
+
     source = open(fname, "r").read().rstrip("\r\n")
     lexer = Lexer(fname, source)
     tokens, error = lexer.make_tokens()
@@ -88,8 +108,14 @@ def lex(fname):
     if tree.error:
         return None, tree.error
 
+    global_scope = Scope()
+    global_scope.set("NULL", Number(0))
+    global_scope.set("TRUE", Number(1))
+    global_scope.set("FALSE", Number(0))
+
     interpreter = Interpreter()
     context = Context("<main>")
+    context.scope = global_scope
     result = interpreter.visit(tree.node, context)
 
     return result.value, result.error

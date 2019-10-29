@@ -1,6 +1,7 @@
 from types import *
 from token import *
 from runtime import *
+from scope import Scope
 
 class Interpreter:
     def visit(self, node, context):
@@ -8,7 +9,7 @@ class Interpreter:
         func = getattr(self, func_name, self.no_visit)
         return func(node, context)
 
-    def no_visit(self, node):
+    def no_visit(self, node, context):
         raise Exception(f"No visit_{type(node).__name__}")
 
     def visit_NumberNode(self, node, context):
@@ -46,7 +47,6 @@ class Interpreter:
 
         if res.error:
             return res
-
         error = None
 
         if node.op.type == TT_SUB:
@@ -55,3 +55,26 @@ class Interpreter:
         if error:
             return res.failure(error)
         return res.success(n.set_pos(node.pos_start, node.pos_end))
+
+    def visit_VarAccessNode(self, node, context):
+        res = RuntimeResult()
+        var_name = node.var_name_token.value
+        value = context.scope.get(var_name)
+
+        if not value:
+            error = RuntimeError(node.pos_start, node.pos_end, f"'{var_name}' is not defined")
+            return res.failure(error)
+
+        value = value.copy().set_pos(node.pos_start, node.pos_end)
+        return res.success(value)
+
+    def visit_VarAssignNode(self, node, context):
+        res = RuntimeResult()
+        var_name = node.var_name_token.value
+        value = res.register(self.visit(node.value_node, context))
+
+        if res.error:
+            return res
+
+        context.scope.set(var_name, value)
+        return res.success(value)
