@@ -34,9 +34,12 @@ class Parser:
             self.current_token = self.tokens[self.token_index]
         return self.current_token
 
-    def bin_op(self, func, ops):
+    def bin_op(self, func_a, ops, func_b=None):
+        if func_b == None:
+            func_b = func_a
+
         res = ParseResult()
-        left = res.register(func())
+        left = res.register(func_a())
 
         if res.error:
             return res
@@ -44,24 +47,18 @@ class Parser:
         while self.current_token.type in ops:
             op = self.current_token
             res.register(self.advance())
-            right = res.register(func())
+            right = res.register(func_b())
             if res.error:
                 return res
             left = BinOpNode(left, op, right)
 
         return res.success(left)
 
-    def factor(self):
+    def atom(self):
         res = ParseResult()
         token = self.current_token
 
-        if token.type in (TT_ADD, TT_SUB):
-            res.register(self.advance())
-            factor = res.register(self.factor())
-            if res.error:
-                return res
-            return res.success(UnaryOpNode(token, factor))
-        elif token.type in (TT_INT, TT_DEC):
+        if token.type in (TT_INT, TT_DEC):
             res.register(self.advance())
             return res.success(NumberNode(token))
         elif token.type == TT_LPAREN:
@@ -73,11 +70,27 @@ class Parser:
                 res.register(self.advance())
                 return res.success(expr)
             else:
-                error = InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, f"Unexpected token '{self.current_token.type}' expected ) in parenthetical")
+                error = InvalidSyntaxError(self.current_token.pos_start, self.current_token.pos_end, f"Unexpected token '{self.current_token.type}' expected ')' in parenthetical")
                 return res.failure(error)
 
-        error = InvalidSyntaxError(token.pos_start, token.pos_end, f"Unexpected token '{token.type}', expected numeric literal")
+        error = InvalidSyntaxError(token.pos_start, token.pos_end, f"Unexpected token '{token.type}', expected operator")
         return res.failure(error)
+
+    def power(self):
+        return self.bin_op(self.atom, (TT_POW, ), self.factor)
+
+    def factor(self):
+        res = ParseResult()
+        token = self.current_token
+
+        if token.type in (TT_ADD, TT_SUB):
+            res.register(self.advance())
+            factor = res.register(self.factor())
+            if res.error:
+                return res
+            return res.success(UnaryOpNode(token, factor))
+
+        return self.power()
 
     def term(self):
         return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_POW))
