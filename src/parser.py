@@ -80,7 +80,7 @@ class Parser:
         return res.failure(error)
 
     def term(self):
-        return self.bin_op(self.factor, (TT_MUL, TT_DIV))
+        return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_POW))
 
     def expr(self):
         return self.bin_op(self.term, (TT_ADD, TT_SUB))

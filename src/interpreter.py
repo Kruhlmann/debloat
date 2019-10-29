@@ -33,6 +33,8 @@ class Interpreter:
             result, error = l.mul_by(r)
         elif node.op.type == TT_DIV:
             result, error = l.div_by(r)
+        elif node.op.type == TT_POW:
+            result, error = l.pow_by(r)
 
         if error:
             return res.failure(error)
