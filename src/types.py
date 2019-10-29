@@ -6,6 +6,7 @@ class Number:
     def set_pos(self, pos_start=None, pos_end=None):
         self.pos_start = pos_start
         self.pos_end = pos_end
+        return self
 
     def add_by(self, n):
         if isinstance(n, Number):

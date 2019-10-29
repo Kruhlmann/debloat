@@ -16,8 +16,6 @@ class Interpreter:
     def visit_BinOpNode(self, node):
         l = self.visit(node.lnode)
         r = self.visit(node.rnode)
-        print(l)
-        print(r)
 
         if node.op.type == TT_ADD:
             result = l.add_by(r)
