@@ -31,6 +31,6 @@ class Interpreter:
     def visit_UnaryOpNode(self, node):
         n = self.visit(node.node)
 
-        if node.op == TT_SUB:
+        if node.op.type == TT_SUB:
             n = n.mul_by(Number(-1))
         return n.set_pos(node.pos_start, node.pos_end);
