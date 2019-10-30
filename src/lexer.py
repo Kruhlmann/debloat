@@ -50,9 +50,17 @@ class Lexer:
             elif self.current_symbol == ")":
                 tokens.append(Token(TT_RPAREN, pos_start=self.pos))
                 self.advance()
+            elif self.current_symbol == "!":
+                token, error = self.make_not_equals()
+                if error:
+                    return [], error
+                tokens.append(token)
             elif self.current_symbol == "=":
-                tokens.append(Token(TT_EQ, pos_start=self.pos))
-                self.advance()
+                tokens.append(self.make_equals())
+            elif self.current_symbol == "<":
+                tokens.append(tself.make_less_than())
+            elif self.current_symbol == ">":
+                tokens.append(tself.make_greater_than())
             else:
                 pos_start = self.pos.copy()
                 illegal_symbol = self.current_symbol
@@ -92,9 +100,53 @@ class Lexer:
         token_type = TT_KEY if id_str in KEYWORDS else TT_ID
         return Token(token_type, id_str, pos_start, self.pos)
 
+    def make_not_equals(self):
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_symbol == "=":
+            self.advance()
+            return Token(TT_NE, pos_start=pos_start, pos_end=self.pos), None
+
+        invalid_symbol = self.current_symbol
+        self.advance()
+        return None, ExpectedSymbolError(pos_start, self.pos, f"Unxpected symbol '{invalid_symbol}', expected '='")
+
+    def make_equals(self):
+        token_type = TT_EQ
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_symbol == "=":
+            self.advance()
+            token_type = TT_EE
+
+        return Token(token_type, pos_start=pos_start, pos_end=self.pos)
+
+    def make_less_than(self):
+        token_type = TT_LT
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_symbol == "=":
+            self.advance()
+            token_type = TT_LTE
+
+        return Token(token_type, pos_start=pos_start, pos_end=pos_end)
+
+    def make_greater_than(self):
+        token_type = TT_GT
+        pos_start = self.pos.copy()
+        self.advance()
+
+        if self.current_symbol == "=":
+            self.advance()
+            token_type = TT_GTE
+
+        return Token(token_type, pos_start=pos_start, pos_end=pos_end)
+
+
 def lex(fname):
-
-
     source = open(fname, "r").read().rstrip("\r\n")
     lexer = Lexer(fname, source)
     tokens, error = lexer.make_tokens()

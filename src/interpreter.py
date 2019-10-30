@@ -36,6 +36,22 @@ class Interpreter:
             result, error = l.div_by(r)
         elif node.op.type == TT_POW:
             result, error = l.pow_by(r)
+        elif node.op.type == TT_EE:
+            result, error = l.eq(r)
+        elif node.op.type == TT_NE:
+            result, error = l.ne(r)
+        elif node.op.type == TT_LT:
+            result, error = l.lt(r)
+        elif node.op.type == TT_GT:
+            result, error = l.gt(r)
+        elif node.op.type == TT_LTE:
+            result, error = l.lte(r)
+        elif node.op.type == TT_GTE:
+            result, error = l.gte(r)
+        elif node.op.matches(TT_KEY, "AND"):
+            result, error = l.logic_and(r)
+        elif node.op.matches(TT_KEY, "OR"):
+            result, error = l.logic_or(r)
 
         if error:
             return res.failure(error)
@@ -51,6 +67,8 @@ class Interpreter:
 
         if node.op.type == TT_SUB:
             n, error = n.mul_by(Number(-1))
+        if node.op.type.matches(TT_KEYWORD, "NOT"):
+            n, error = n.logic_not()
 
         if error:
             return res.failure(error)

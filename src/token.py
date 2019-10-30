@@ -17,13 +17,25 @@ TT_POW = "POW"
 TT_LPAREN = "LPAREN"
 TT_RPAREN = "RPAREN"
 
+# Logic
+TT_EQ = "EQ"
+TT_EE = "EE"
+TT_NE = "NE"
+TT_LT = "LT"
+TT_GT = "GT"
+TT_LTE = "LTE"
+TT_GTE = "GTE"
+
+# Misc
 TT_KEY = "KEY"
 TT_EOF = "EOF"
-TT_EQ = "EQ"
 TT_ID = "ID"
 
 KEYWORDS = [
-    "SET"
+    "SET",
+    "AND",
+    "OR",
+    "NOT"
 ]
 
 class Token:

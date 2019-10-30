@@ -40,6 +40,42 @@ class Number:
         if isinstance(n, Number):
             return Number(self.value ** n.value).set_context(self.context), None
 
+    def eq(self, n):
+        if isinstance(n, Number):
+            return Number(1 if self.value == n.value else 0).set_context(self.context), None
+
+    def neq(self, n):
+        if isinstance(n, Number):
+            return Number(0 if self.value == n.value else 1).set_context(self.context), None
+
+    def lt(self, n):
+        if isinstance(n, Number):
+            return Number(1 if self.value < n.value else 0).set_context(self.context), None
+
+    def gt(self, n):
+        if isinstance(n, Number):
+            return Number(1 if self.value > n.value else 0).set_context(self.context), None
+
+    def lte(self, n):
+        if isinstance(n, Number):
+            return Number(1 if self.value <= n.value else 0).set_context(self.context), None
+
+    def gte(self, n):
+        if isinstance(n, Number):
+            return Number(1 if self.value >= n.value else 0).set_context(self.context), None
+
+    def logic_and(self, n):
+        if isinstance(n, Number):
+            return Number(1 if self.value and n.value else 0).set_context(self.context), None
+
+    def logic_or(self, n):
+        if isinstance(n, Number):
+            return Number(1 if self.value or n.value else 0).set_context(self.context), None
+
+    def logic_not(self, n):
+        if isinstance(n, Number):
+            return Number(1 if self.value == 0 else 0).set_context(self.context), None
+
     def copy(self):
         copy = Number(self.value)
         copy.set_pos(self.pos_start, self.pos_end)

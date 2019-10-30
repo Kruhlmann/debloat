@@ -49,6 +49,10 @@ class InvalidSyntaxError(Error):
     def __init__(self, pos_start, pos_end, details=""):
         super().__init__("InvalidSyntaxError", pos_start, pos_end, details)
 
+class ExpectedSymbolError(Error):
+    def __init__(self, pos_start, pos_end, details):
+        super().__init__("ExpectedSymbolError", pos_start, pos_end, details)
+
 class RuntimeError(Error):
     def __init__(self, pos_start, pos_end, details, context):
         super().__init__("RuntimeError", pos_start, pos_end, details)
